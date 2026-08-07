@@ -1,5 +1,4 @@
 #include "Window.h"
-
 #include <iostream>
 #include <stdexcept>
 #include <vector>
@@ -133,9 +132,12 @@ void Window::PickPhysicalDevice() {
 }
 
 void Window::InitVulkan() {
+    if (volkInitialize() != VK_SUCCESS) { // initialize volk first
+        throw std::runtime_error("Failed to initialize Volk!");
+    }
     VkApplicationInfo appInfo{
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
-        .pApplicationName = "Audio Visualizer",
+        .pApplicationName = "Vulkan Renderer",
         .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
         .pEngineName = "Engine",
         .engineVersion = VK_MAKE_VERSION(1, 0, 0),
@@ -158,12 +160,11 @@ void Window::InitVulkan() {
     if (vkCreateInstance(&createInfo, nullptr, &m_vulkanInstance) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create Vulkan instance!");
     }
-
+    volkLoadInstance(m_vulkanInstance);
     std::cout << "Successfully created Vulkan Instance!" << std::endl;
 }
 void Window::FindQueueFamilies() {
     uint32_t queueFamilyCount = 0;
-    std::cout << m_physicalDevice << std::endl;
     vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &queueFamilyCount, nullptr);
 
     std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
@@ -204,19 +205,17 @@ void Window::CreateLogicalDevice() {
         .pEnabledFeatures = &deviceFeatures
     };
 
-    // The most important one is VK_KHR_SWAPCHAIN_EXTENSION_NAME.
-    // We NEED this extension to be able to present images to a screen window.
     const std::vector<const char*> deviceExtensions = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
     createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
     createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
-    // 5. Create the logical device!
+    // 5. Create the logical device
     if (vkCreateDevice(m_physicalDevice, &createInfo, nullptr, &m_device) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create logical device!");
     }
-
+    volkLoadDevice(m_device);
     // 6. Retrieve the handle to the queue we just created
     // We ask for queue index 0 from our graphics queue family
     vkGetDeviceQueue(m_device, m_graphicsQueueFamily.value(), 0, &m_graphicsQueue);
@@ -225,7 +224,7 @@ void Window::CreateLogicalDevice() {
 }
 
 void Window::CreateSurface() {
-    // GLFW magically handles the OS-specific Win32/X11 code to bridge the window to Vulkan!
+    // GLFW magically handles the OS-specific Win32/X11 code to bridge the window to Vulkan
     if (glfwCreateWindowSurface(m_vulkanInstance, m_window, nullptr, &m_surface) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create window surface!");
     }

@@ -1,12 +1,8 @@
-//
-// Created by ybsxm on 7/30/2026.
-//
-
-#ifndef AUDIO_VISUALIZER_PROJECT_WINDOW_H
-#define AUDIO_VISUALIZER_PROJECT_WINDOW_H
 #include <optional>
+#include "volk.h"
 #include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
+#include "vk_mem_alloc.h"
 #include <string>
 #include <vector>
 class Window {
@@ -36,6 +32,8 @@ private:
     VkSemaphore m_renderFinishedSemaphore;
     VkFence m_inFlightFence;
 
+    VmaAllocator vmaAllocator;
+
     void InitVulkan();
     void PickPhysicalDevice();
     void FindQueueFamilies();
@@ -44,6 +42,7 @@ private:
     void CreateSwapChain();
     void CreateImageViews();
     void CreateSyncObjects();
+
 
 
 public:
@@ -66,5 +65,3 @@ public:
 
 };
 
-
-#endif //AUDIO_VISUALIZER_PROJECT_WINDOW_H
